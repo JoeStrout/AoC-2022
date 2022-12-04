@@ -31,6 +31,13 @@ map.stuffInto = function(otherMap)
 	end for
 end function
 
+// list.swap: swap two values in place, by their indexes
+list.swap = function(index1, index2)
+	temp = self[index1]
+	self[index1] = self[index2]
+	self[index2] = temp
+end function
+
 // Span: an interval between two values.
 globals.Span = {}
 Span.startVal = 0
@@ -95,11 +102,16 @@ runUnitTests = function
 		end if
 	end function
 		
-	testing = "swap"
+	testing = "map.swap"
 	d = {"one":"ichi", "two":"ni", "three":"san", "four":"shi", "five":"go"}
 	d.swap "one", "two"
 	assertEqual d.one, "ni"
 	assertEqual d.two, "ichi"
+
+	testing = "list.swap"
+	a = ["zero", "one", "two"]
+	a.swap 1, 2
+	assertEqual a, ["zero", "two", "one"]
 
 	testing = "applyToValues"
 	d = {"one":"ichi", "two":"ni", "three":"san", "four":"shi", "five":"go"}

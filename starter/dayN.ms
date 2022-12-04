@@ -7,8 +7,8 @@ import "aoc"
 //f = file.open("input.txt")
 f = file.open("example.txt")
 
-totalA = 0
-totalB = 0
+resultA = []
+resultB = []
 while not f.atEnd
 	line = f.readLine
 	if line == null then break // end of file
@@ -24,10 +24,11 @@ while not f.atEnd
 	valueB = null
 	
 	print m + ": " + valueA + ", " + valueB
-	totalA = totalA + valueA
-	totalB = totalB + valueB
+	resultA.push valueA
+	resultB.push valueB
 end while
 f.close
 
-print "total (part A): " + totalA
-print "total (part B): " + totalB
+print "final answer (part A): " + resultA.sum
+print "final answer (part B): " + resultB.sum
+// Also available: list.min, list.max, list.mean
