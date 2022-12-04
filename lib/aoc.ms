@@ -38,6 +38,24 @@ list.swap = function(index1, index2)
 	self[index2] = temp
 end function
 
+// string.between: find a string between two substrings
+string.between = function(startTag, endTag)
+	if startTag == "" then
+		pos0 = 0
+	else
+		pos0 = self.indexOf(startTag)
+	end if
+	if pos0 == null then return null
+	pos0 = pos0 + startTag.len
+	if endTag == "" then
+		pos1 = self.len
+	else
+		pos1 = self.indexOf(endTag, pos0-1)
+	end if
+	if pos1 == null then return null
+	return self[pos0:pos1]
+end function
+
 // Span: an interval between two values.
 globals.Span = {}
 Span.startVal = 0
@@ -93,6 +111,25 @@ Span.intersection = function(other, returnNullIfEmpty=false)
 	return result
 end function
 
+// function to grab the example data
+globals.getExampleData = function(dayNum)
+	if dayNum == null then dayNum = file.curdir[-1].val
+	if dayNum == 0 then dayNum = input("Day number? ").val
+	url = "https://adventofcode.com/2022/day/" + dayNum
+	data = http.get(url)
+	print "Read " + data.len + " bytes from " + url
+	sampleData = data.between("<pre><code>", "</code></pre>")
+	if not sampleData then
+		print "Unable to find sample data in " + url
+	else
+		lines = sampleData.split(char(10))
+		file.writeLines "example.txt", lines
+		print "Wrote " + lines.len + " lines to example.txt"
+		view "example.txt"
+	end if
+end function
+globals.getSampleData = @getExampleData
+
 runUnitTests = function
 	errorCount = 0
 	assertEqual = function(actual, expected, note)
@@ -112,6 +149,14 @@ runUnitTests = function
 	a = ["zero", "one", "two"]
 	a.swap 1, 2
 	assertEqual a, ["zero", "two", "one"]
+
+	testing = "string.between"
+	s = "foobarbaz"
+	assertEqual s.between("foo","baz"), "bar"
+	assertEqual s.between("oba","rba"), ""
+	assertEqual s.between("foo",""), "barbaz"
+	assertEqual s.between("","baz"), "foobar"
+		
 
 	testing = "applyToValues"
 	d = {"one":"ichi", "two":"ni", "three":"san", "four":"shi", "five":"go"}
