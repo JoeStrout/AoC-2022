@@ -111,6 +111,89 @@ Span.intersection = function(other, returnNullIfEmpty=false)
 	return result
 end function
 
+list.maxElementLen = function(self)
+	m = 0
+	for i in self.indexes
+		m = max(m, self[i].len)
+	end for
+	return m
+end function
+
+list.pad = function(length, padValue=null, cutIfTooLong=true)
+	if self.len > length then
+		if cutIfTooLong then return self[:length]
+	else if self.len < length then
+		return self + [padValue] * (length - self.len)
+	end if
+	return self
+end function
+
+list.padToUniform = function(self)
+	maxLen = self.maxElementLen
+	for i in self.indexes
+		self[i] = self[i].pad(maxLen)
+	end for
+end function
+
+// Given a list of strings, which we can think of like a 2D
+// block of characters, rotate it clockwise.
+list.blockRotateCW = function(self)
+	src = self[:]
+	src.padToUniform
+	for destRow in range(0, src.len-1)
+		if src[0] isa string then
+			s = ""
+			for srcRow in range(src.len-1)
+				s = s + src[srcRow][destRow]
+			end for
+		else
+			s = []
+			for srcRow in range(src.len-1)
+				s.push src[srcRow][destRow]
+			end for
+		end if
+		self[destRow] = s
+	end for
+end function
+
+// Given a list of strings, which we can think of like a 2D
+// block of characters, rotate it counter-clockwise.
+list.blockRotateCCW = function(self)
+	src = self[:]
+	src.padToUniform
+	for destRow in range(0, src.len-1)
+		if src[0] isa string then
+			s = ""
+			for srcRow in range(0, src.len-1)
+				s = s + src[srcRow][src.len - 1 - destRow]
+			end for
+		else
+			s = []
+			for srcRow in range(0, src.len-1)
+				s.push src[srcRow][src.len - 1 - destRow]
+			end for
+		end if
+		self[destRow] = s
+	end for
+end function
+
+list.blockPrint = function(self)
+	for item in self
+		print item
+	end for
+end function
+
+list.select = function(indexes)
+	result = []
+	for i in indexes
+		result.push self[i]
+	end for
+	if self isa string then return result.join("")
+	return result
+end function
+string.select = @list.select
+
+
 // function to grab the example data
 globals.getExampleData = function(dayNum)
 	if dayNum == null then dayNum = file.curdir[-1].val
@@ -189,6 +272,25 @@ runUnitTests = function
 	d = Span.make("10-12")
 	assertEqual d.intersection(a), Span.make(10,7)
 	assertEqual d.intersection(a, true), null
+	
+	testing = "blockRotate"
+	a = ["ABC", "DEF", "GH"]
+	a.blockRotateCW
+	assertEqual a, ["GDA", "HEB", " FC"]
+	a.blockRotateCCW
+	assertEqual a, ["ABC", "DEF", "GH "]
+	
+	a = [[1,2,3], [4,5,6], [7,8,9]]
+	a.blockRotateCW
+	assertEqual a, [[7,4,1], [8,5,2], [9,6,3]]
+	a.blockRotateCCW
+	assertEqual a, [[1,2,3], [4,5,6], [7,8,9]]
+	
+	testing = "select"
+	s = "ABCDEFGHIJK"
+	assertEqual s.select(range(1, s.len-1, 2)), "BDFHJ"
+	a = [1,2,3,5,7,11,13]
+	assertEqual a.select(range(1, a.len-1, 2)), [2,5,11]
 	
 end function
 
