@@ -193,6 +193,103 @@ list.select = function(indexes)
 end function
 string.select = @list.select
 
+// list.combinations: get all combinations (where order does
+// not matter) of 'k' items from this list.
+// Reference: https://stackoverflow.com/questions/29910312
+list.combinations = function(k)
+	result = []
+	s = range(0, k-1)	// index sequence (what items we select from self)
+	result.push self.select(s)
+	while true
+		// find position of last item that can be incremented
+		for i in range(k-1, -1)
+			if i < 0 then return result
+			if s[i] < self.len - k + i then break
+		end for
+		s[i] = s[i] + 1		// increment this item
+		if i < k-1 then
+			for i in range(i+1, k-1)	// fill up remaining items
+				s[i] = s[i-1] + 1
+			end for
+		end if
+		// now, grab the selected subset
+		result.push self.select(s)
+	end while
+end function	
+string.combinations = @list.combinations // works for both! :)
+
+// list.permutations: return all permutations of this list,
+// optionally of a smaller size.
+list.permutations = function(ofLength=null)
+	if self.len < 2 then return [self]
+	if ofLength == null then ofLength = self.len
+	result = []
+	if ofLength < self.len then
+		// handle this by first finding all combinations
+		// of the specified length, and then permuting those
+		for combo in self.combinations(ofLength)
+			result = result + combo.permutations
+		end for
+		return result
+	end if
+	// permuting the entire list is easy to do recursively:
+	for i in self.indexes
+		item = self[i]
+		remainder = self[:i] + self[i+1:]
+		for rest in remainder.permutations
+			result.push [item] + rest
+		end for
+	end for
+	return result
+end function
+
+// string.permutations: return all permutations of this string,
+// optionally of a smaller size.
+string.permutations = function(ofLength=null)
+	if self.len < 2 then return [self]
+	result = []
+	if ofLength == null then ofLength = self.len
+	if ofLength < self.len then
+		// handle this by first finding all combinations
+		// of the specified length, and then permuting those
+		for combo in self.combinations(ofLength)
+			result = result + combo.permutations
+		end for
+		return result
+	end if
+	for i in self.indexes
+		item = self[i]
+		remainder = self[:i] + self[i+1:]
+		for rest in remainder.permutations
+			result.push item + rest
+		end for
+	end for
+	return result
+end function
+
+factorial = function(n)
+	result = 2
+	for i in range(3,n)
+		result = result * n
+	end for
+	return result
+end function
+
+// list.nthPermutation: print the Nth permutation of the
+// items of this list.  You'll get unique permutations
+// from 0 through factorial(self.len)-1.
+list.nthPermutation = function(n)
+	result = []
+	copy = self[:]
+	while copy
+		i = n % copy.len
+		result.push copy[i]
+		copy.remove i
+	end while
+	return result
+end function
+
+
 
 // function to grab the example data
 globals.getExampleData = function(dayNum)
