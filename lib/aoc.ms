@@ -1,6 +1,7 @@
 // Utilities made for the Advent of Code challenges
 
 import "stringUtil"
+import "mapUtil"
 
 min = function(a, b)
 	if a <= b then return a else return b
@@ -289,11 +290,40 @@ list.nthPermutation = function(n)
 	return result
 end function
 
+// Given a tree (maps that contain further maps), apply
+// the function f to each node (map), recursively, and 
+// return a list of those maps for which f returns true.
+map.treeSearch = function(f)
+	result = []
+	if f(self) then result.push self
+	for value in self.values
+		if value isa map then
+			result = result + value.treeSearch(@f)
+		end if
+	end for
+	return result
+end function
 
+// Given a tree (maps that contain further maps), recursively
+// remove all nodes (maps) for which f returns true.
+// (Note that this cannot apply to the root, because what
+// would you remove it FROM?)
+map.prune = function(f)
+	for key in self.indexes
+		value = self[key]
+		if value isa map then
+			if f(value) then
+				self.remove key
+			else
+				value.prune @f
+			end if
+		end if
+	end for
+end function
 
 // function to grab the example data
 globals.getExampleData = function(dayNum)
-	if dayNum == null then dayNum = file.curdir[-1].val
+	if dayNum == null then dayNum = file.curdir[3:].val
 	if dayNum == 0 then dayNum = input("Day number? ").val
 	url = "https://adventofcode.com/2022/day/" + dayNum
 	data = http.get(url)
@@ -389,6 +419,28 @@ runUnitTests = function
 	a = [1,2,3,5,7,11,13]
 	assertEqual a.select(range(1, a.len-1, 2)), [2,5,11]
 	
+	testing = "treeSearch"
+	m = {}
+	m.a = {}
+	m.a.b = {"foo":42}
+	m.a.c = {"foo":10}
+	m.d = {"bar":true}
+	f = function(m)
+		return m.get("foo", 0) > 20
+	end function
+	assertEqual m.treeSearch(@f), [m.a.b]
+	assertEqual m.d.treeSearch(@f), []
+	f = function(m)
+		return not m.hasIndex("foo")
+	end function
+	assertEqual m.treeSearch(@f), [m, m.a, m.d]
+	
+	testing = "prune"
+	f = function(m)
+		return m.get("foo") == 10
+	end function
+	m.prune @f
+	assertEqual m.a.hasIndex("c"), false
 end function
 
 if locals == globals then runUnitTests
