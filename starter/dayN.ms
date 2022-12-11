@@ -4,15 +4,13 @@ import "listUtil"
 import "mathUtil"
 import "aoc"
 
-//f = file.open("input.txt")
-f = file.open("example.txt")
+if 0 then fname = "input.txt" else fname = "example.txt"
+lines = file.readLines(fname)
+if not lines[-1] then lines.pop
 
 resultA = []
 resultB = []
-while not f.atEnd
-	line = f.readLine
-	if line == null then break // end of file
-
+for line in lines
 	m = line.match("{p1},{p2}")
 	if not m then
 		print "Pattern did not match on line: " + line
@@ -30,7 +28,6 @@ while not f.atEnd
 	resultA.push valueA
 	resultB.push valueB
 end while
-f.close
 
 print "final answer (part A): " + resultA.sum
 print "final answer (part B): " + resultB.sum

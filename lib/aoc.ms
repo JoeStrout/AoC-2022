@@ -2,6 +2,7 @@
 
 import "stringUtil"
 import "mapUtil"
+import "listUtil"
 
 min = function(a, b)
 	if a <= b then return a else return b
@@ -321,9 +322,56 @@ map.prune = function(f)
 	end for
 end function
 
+LineParser = {}
+LineParser.make = function(linesOrFilename)
+	if linesOrFilename isa string then
+		lines = file.readLines(linesOrFilename)
+		if lines == null then
+			print "Unable to read file: " + linesOrFilename
+			return null
+		end if
+		linesOrFilename = lines
+	end if
+	parser = new LineParser
+	parser.lines = linesOrFilename
+	parser.index = 0
+	return parser
+end function
+LineParser.atEnd = function
+	return self.index >= self.lines.len
+end function
+LineParser.advance = function
+	if self.index < self.lines.len then
+		self.index = self.index + 1
+	end if
+end function
+LineParser.backup = function
+	if self.index > 0 then self.index = self.index - 1
+end function
+LineParser.get = function(pattern, default=null)
+	if self.index >= self.lines.len then return default
+	m = self.lines[self.index].match(pattern)
+	self.advance
+	if m == null then return default
+	for kv in m
+		if kv.key == "" then continue
+		id = kv.key
+		if id[0] == "n" then return kv.value.val	// number
+		if id[0] == "s" then return kv.value		// string
+		if id[0] == "l" then		// list
+			elems = kv.value.split(",")
+			elems.apply @val
+			return elems
+		end if
+		print "Unknown field type: " + id
+		exit
+	end for
+end function
+	
+
 // function to grab the example data
 globals.getExampleData = function(dayNum)
-	if dayNum == null then dayNum = file.curdir[3:].val
+	if dayNum == null then dayNum = file.curdir[8:].val
 	if dayNum == 0 then dayNum = input("Day number? ").val
 	url = "https://adventofcode.com/2022/day/" + dayNum
 	data = http.get(url)
@@ -441,6 +489,18 @@ runUnitTests = function
 	end function
 	m.prune @f
 	assertEqual m.a.hasIndex("c"), false
+	
+	testing = "LineParser"
+	data = ["  Starting items: 81, 51, 85",
+			"  Operation: new = old * old",
+			"  Test: divisible by 5"]
+	p = LineParser.make(data)
+	assertEqual p.get("{}items: {list}"), [81, 51, 85]
+	assertEqual p.get("Operation: {str}"), "new = old * old"
+	assertEqual p.get("{}divisible by {num}"), 5
+	assertEqual p.atEnd, true
+
+	
 end function
 
 if locals == globals then runUnitTests
