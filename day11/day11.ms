@@ -1,9 +1,3 @@
-//import "stringUtil"
-//import "mapUtil"
-//import "listUtil"
-//import "mathUtil"
-//import "aoc"
-
 if 1 then fname = "input.txt" else fname = "example.txt"
 
 Monkey = {}

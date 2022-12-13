@@ -23,19 +23,13 @@ Monkey.doOneItem = function
 	if not self.items then return false
 	item = self.items.pull
 	self.inspectCount = self.inspectCount + 1
-	//print "monkey " + monkeys.indexOf(self) + " inspects item " + item
 	item = self.op(item)
-	//print "worry level becomes " + item
-	//item = floor(item/3)
 //	item = item % 96577   // for example data
 	item = item % 9699690  // for real data
 	
-	//print "monkey gets bored, worry level drops to " + item
 	if item % self.divBy == 0 then
-		//print "monkey passes to " + self.ifTrue
 		monkeys[self.ifTrue].items.push item
 	else
-		//print "monkey passes to " + self.ifFalse
 		monkeys[self.ifFalse].items.push item
 	end if
 	return self.items.len > 0
