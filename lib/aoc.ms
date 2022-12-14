@@ -195,6 +195,82 @@ list.select = function(indexes)
 end function
 string.select = @list.select
 
+// list.sortWithFunction: give it a comparison function that
+// takes two items, and returns 0 if they are equal,
+// any value < 0 if the first is less than the second,
+// and any value > 0 if the first is greater than the second.
+list.sortWithFunction = function(compareFunc, fromIndex=null, toIndex=null)
+	if fromIndex == null then fromIndex = 0
+	if toIndex == null then toIndex = self.len - 1
+    if fromIndex >= toIndex then return self
+    // find a pivot value
+	pivot = self[(fromIndex + toIndex) / 2]
+
+	leftPtr = fromIndex - 1
+	rightPtr = toIndex + 1
+//	print self + " (from " + fromIndex + " to " + toIndex + ") Pivot value: " + pivot
+	while leftPtr < rightPtr
+		// move left index forward at least once, until the element
+		// at the left index is >= the pivot
+		while true
+			leftPtr = leftPtr + 1
+			if compareFunc(self[leftPtr], pivot) >= 0 then break
+		end while
+		// move the right index to the left at least once, until
+		// the element at the right index is <= the pivot
+		while true
+			rightPtr = rightPtr - 1
+			if compareFunc(self[rightPtr], pivot) <= 0 then break
+		end while
+		// if the indices crossed or met, we're done
+//		print "leftPtr: " + leftPtr + "  rightPtr: " + rightPtr
+		if leftPtr >= rightPtr then break
+		self.swap leftPtr, rightPtr
+//		print "swapped to get: " + self + " (from " + fromIndex + " to " + toIndex + ")"
+	end while
+
+//	print self + ", now sort " + fromIndex + "-" +(rightPtr) + " and " + (rightPtr+1) + "-" + toIndex
+	if fromIndex < rightPtr then self.sortWithFunction @compareFunc, fromIndex, rightPtr
+	if rightPtr+1 < toIndex then self.sortWithFunction @compareFunc, rightPtr+1, toIndex
+	return self
+end function
+
+// compareNumeric: a comparison function based on the val() of each element
+compareNumeric = function(a,b); return val(a) - val(b); end function
+
+// compareCaseSensitive: unlike standard sort, which puts "A" and "a" together
+// before "B" and "b", this one puts all the capitalized words first, followed
+// by all the lowercase words.
+compareCaseSensitive = function(a,b)
+	if a > b then return 1
+	if a < b then return -1
+	return 0
+end function
+
+testone = function(nums)
+	copy = nums[:]
+	nums.sortWithFunction @compareNumeric
+	copy.sort
+	if copy == nums then
+		print "OK: " + nums
+	else
+		print "FAILURE:"
+		print "  built-in sort: " + copy
+		print "      quicksort: " + nums
+		exit
+	end if
+end function
+testmany = function(n=100)
+	for i in range(n-1)
+		arr = []
+		for j in range(0, 4+rnd*5)
+			arr.push floor(100*rnd)
+		end for
+		testone arr
+	end for
+end function
+	
+
 // list.combinations: get all combinations (where order does
 // not matter) of 'k' items from this list.
 // Reference: https://stackoverflow.com/questions/29910312

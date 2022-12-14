@@ -1,8 +1,4 @@
-import "stringUtil"
-import "mapUtil"
 import "listUtil"
-import "mathUtil"
-import "aoc"
 
 if 1 then fname = "input.txt" else fname = "example.txt"
 lines = file.readLines(fname)
@@ -67,7 +63,6 @@ findPath = function(startPos, endPos)
 		
 		for nextCellPos in walkableNeighbors(current)
 			cost = cellCosts[current] + heuristic(nextCellPos, current)
-//			print "neighbor " + nextCellPos + " has cost " + cost
 			if not cellCosts.hasIndex(nextCellPos) or cost < cellCosts[nextCellPos] then
 				cellCosts[nextCellPos] = cost
 				i = 0

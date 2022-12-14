@@ -40,6 +40,8 @@ end function
 //	output: numeric value indicating how close the first is to the 
 //		end state.  Note that this must never overestimate the true
 //		cost, or we may not be able to find the least-cost path.
+//		(An overly punishing heuristic results in greedier behavior,
+//		which may return an answer faster, but it may be suboptimal.)
 Search.heuristic = function(fromState, toEndState)
 	return 0
 end function
