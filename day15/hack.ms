@@ -1,14 +1,55 @@
 // Utilities made for the Advent of Code challenges
 
-import "stringUtil"
-import "mapUtil"
-import "listUtil"
+string.match = function(pattern)
+	// Start by splitting this pattern into literal and field parts.
+	parts = []
+	p = 0
+	while p < pattern.len
+		// find the end of a literal part
+		nextp = pattern.indexOf("{", p-1)
+		if nextp == null then
+			parts.push pattern[p:]
+			break
+		end if
+		if nextp > p then parts.push pattern[p:nextp]
+		p = nextp
+		// find the end of a field part
+		nextp = pattern.indexOf("}", p)
+		if p == null then
+			parts[-1] = parts[-1] + pattern[p:]
+			break
+		end if
+		parts.push pattern[p:nextp+1]
+		p = nextp + 1
+	end while
+	// Now, find each literal parts in this string,
+	// and fill in the variable parts (fields) in between.
+	result = {}
+	p = 0
+	lastStartPos = 0
+	for i in parts.indexes
+		part = parts[i]
+		if part[0] == "{" and part[-1] == "}" then
+			lastStartPos = p
+			if i == parts.len-1 then result[part[1:-1]] = self[p:]
+			continue
+		end if
+		p = self.indexOf(part, p-1)
+		if p == null then return null  // literal part not found
+		if i > 0 then
+			result[parts[i-1][1:-1]] = self[lastStartPos:p]
+		end if
+		lastStartPos = p
+		p = p + part.len
+	end for
+	return result
+end function
 
-globals.min = function(a, b)
+min = function(a, b)
 	if a <= b then return a else return b
 end function
 
-globals.max = function(a, b)
+max = function(a, b)
 	if a >= b then return a else return b
 end function
 
@@ -208,6 +249,7 @@ list.sortWithFunction = function(compareFunc, fromIndex=null, toIndex=null)
 
 	leftPtr = fromIndex - 1
 	rightPtr = toIndex + 1
+//	print self + " (from " + fromIndex + " to " + toIndex + ") Pivot value: " + pivot
 	while leftPtr < rightPtr
 		// move left index forward at least once, until the element
 		// at the left index is >= the pivot
@@ -222,10 +264,13 @@ list.sortWithFunction = function(compareFunc, fromIndex=null, toIndex=null)
 			if compareFunc(self[rightPtr], pivot) <= 0 then break
 		end while
 		// if the indices crossed or met, we're done
+//		print "leftPtr: " + leftPtr + "  rightPtr: " + rightPtr
 		if leftPtr >= rightPtr then break
 		self.swap leftPtr, rightPtr
+//		print "swapped to get: " + self + " (from " + fromIndex + " to " + toIndex + ")"
 	end while
 
+//	print self + ", now sort " + fromIndex + "-" +(rightPtr) + " and " + (rightPtr+1) + "-" + toIndex
 	if fromIndex < rightPtr then self.sortWithFunction @compareFunc, fromIndex, rightPtr
 	if rightPtr+1 < toIndex then self.sortWithFunction @compareFunc, rightPtr+1, toIndex
 	return self
@@ -460,119 +505,108 @@ globals.getExampleData = function(dayNum)
 end function
 globals.getSampleData = @getExampleData
 
-runUnitTests = function
-	errorCount = 0
-	assertEqual = function(actual, expected, note)
-		if actual != expected then
-			print "Unit test failure (" + testing + "): expected " + expected + ", got " + actual
-			outer.errorCount = errorCount + 1
-		end if
-	end function
-		
-	testing = "map.swap"
-	d = {"one":"ichi", "two":"ni", "three":"san", "four":"shi", "five":"go"}
-	d.swap "one", "two"
-	assertEqual d.one, "ni"
-	assertEqual d.two, "ichi"
+resultB = []
 
-	testing = "list.swap"
-	a = ["zero", "one", "two"]
-	a.swap 1, 2
-	assertEqual a, ["zero", "two", "one"]
+if 0 then fname = "input.txt" else fname = "example.txt"
+lines = file.readLines(fname)
+if lines == null then
+	print "Unable to read: " + fname
+	exit
+end if
+if not lines[-1] then lines.pop
 
-	testing = "string.between"
-	s = "foobarbaz"
-	assertEqual s.between("foo","baz"), "bar"
-	assertEqual s.between("oba","rba"), ""
-	assertEqual s.between("foo",""), "barbaz"
-	assertEqual s.between("","baz"), "foobar"
-		
+if fname == "example.txt" then maxY = 20 else maxY = 4000000
 
-	testing = "applyToValues"
-	d = {"one":"ichi", "two":"ni", "three":"san", "four":"shi", "five":"go"}
-	d.applyToValues @upper
-	assertEqual d.one, "ICHI"
-	d = {"one":"1", "two":"2"}
-	d.applyToValues @val
-	assertEqual d.one, 1
-	assertEqual d.two, 2	
-	
-	testing = "Span"
-	a = Span.make(3,7)
-	assertEqual a.startVal, 3
-	assertEqual a.endVal, 7
-	b = Span.make("5 - 9")
-	assertEqual b.startVal, 5
-	assertEqual b.endVal, 9
-	assertEqual a.overlaps(b), true
-	assertEqual a.contains(b), false
-	assertEqual b.contains(a), false
-	assertEqual a.union(b), Span.make(3,9)
-	assertEqual a.intersection(b), Span.make(5,7)
-	c = Span.make(5,5)
-	assertEqual c.isEmpty, true
-	assertEqual a.isEmpty, false
-	c = Span.make(8,5)
-	assertEqual c.isEmpty, true
-	c.normalize
-	assertEqual c, Span.make(5,8)
-	d = Span.make("10-12")
-	assertEqual d.intersection(a), Span.make(10,7)
-	assertEqual d.intersection(a, true), null
-	
-	testing = "blockRotate"
-	a = ["ABC", "DEF", "GH"]
-	a.blockRotateCW
-	assertEqual a, ["GDA", "HEB", " FC"]
-	a.blockRotateCCW
-	assertEqual a, ["ABC", "DEF", "GH "]
-	
-	a = [[1,2,3], [4,5,6], [7,8,9]]
-	a.blockRotateCW
-	assertEqual a, [[7,4,1], [8,5,2], [9,6,3]]
-	a.blockRotateCCW
-	assertEqual a, [[1,2,3], [4,5,6], [7,8,9]]
-	
-	testing = "select"
-	s = "ABCDEFGHIJK"
-	assertEqual s.select(range(1, s.len-1, 2)), "BDFHJ"
-	a = [1,2,3,5,7,11,13]
-	assertEqual a.select(range(1, a.len-1, 2)), [2,5,11]
-	
-	testing = "treeSearch"
-	m = {}
-	m.a = {}
-	m.a.b = {"foo":42}
-	m.a.c = {"foo":10}
-	m.d = {"bar":true}
-	f = function(m)
-		return m.get("foo", 0) > 20
-	end function
-	assertEqual m.treeSearch(@f), [m.a.b]
-	assertEqual m.d.treeSearch(@f), []
-	f = function(m)
-		return not m.hasIndex("foo")
-	end function
-	assertEqual m.treeSearch(@f), [m, m.a, m.d]
-	
-	testing = "prune"
-	f = function(m)
-		return m.get("foo") == 10
-	end function
-	m.prune @f
-	assertEqual m.a.hasIndex("c"), false
-	
-	testing = "LineParser"
-	data = ["  Starting items: 81, 51, 85",
-			"  Operation: new = old * old",
-			"  Test: divisible by 5"]
-	p = LineParser.make(data)
-	assertEqual p.get("{}items: {list}"), [81, 51, 85]
-	assertEqual p.get("Operation: {str}"), "new = old * old"
-	assertEqual p.get("{}divisible by {num}"), 5
-	assertEqual p.atEnd, true
-
-	
+compareSpans = function(a,b)
+	if a.startVal == b.startVal then
+		return a.endVal - b.endVal
+	else
+		return a.startVal - b.startVal
+	end if
 end function
 
-if locals == globals then runUnitTests
+clear
+scale = 320 / maxY
+observations = []
+for line in lines
+	m = line.match("Sensor at x={sx}, y={sy}: closest beacon is at x={bx}, y={by}")
+	if not m then
+		print "Pattern did not match on line: " + line
+		continue
+	end if
+	m.applyToValues @val
+	m.stuffInto @locals
+	distToSensor = abs(bx-sx) + abs(by-sy)
+	gfx.drawPoly [
+		[400 + (sx - distToSensor) * scale, 220 + sy * scale],
+		[400 + sx * scale, 220 + (sy - distToSensor) * scale],
+		[400 + (sx + distToSensor) * scale, 220 + sy * scale],
+		[400 + sx * scale, 220 + (sy + distToSensor) * scale]]
+	gfx.drawRect 400, 220, maxY*scale, maxY*scale, color.blue
+	observations.push m
+end for
+exit
+for yOfInterest in range(1000000,maxY)
+	if yOfInterest % 1000 == 0 then print yOfInterest + "..."
+	resultA = []
+	spans = []
+	for m in observations
+		m.stuffInto @locals
+		distToSensor = abs(bx-sx) + abs(by-sy)
+		ydiff = abs(sy - yOfInterest)
+		if ydiff > distToSensor then continue
+		radiusAtY = distToSensor - ydiff
+		span = Span.make(sx - radiusAtY, sx + radiusAtY)
+		
+		found = false
+		for i in spans.indexes
+			if spans[i].overlaps(span) then
+				spans[i] = spans[i].union(span)
+				found = true
+				break
+			end if
+		end for
+		if not found then spans.push span
+	end for
+	
+	while spans.len > 1
+		didAny = false
+		for i in range(spans.len-1, 1)
+			for j in range(i-1)
+				if spans[j].overlaps(spans[i]) then
+					spans[j] = spans[j].union(spans[i])
+					spans.remove i
+					didAny = true
+					break
+				end if
+			end for
+			if didAny then break
+		end for
+		if not didAny then break
+	end while
+	
+	if spans.len > 1 then spans.sortWithFunction @compareSpans
+	for s in spans
+		resultA.push s.str
+	end for
+	if spans[0].startVal > 0 then
+		print "y:" + yOfInterest + "  spans: " + resultA.join("; ")
+		exit
+	end if
+	if spans.len == 1 then
+		if spans[0].endVal < maxY then
+			print "y:" + yOfInterest + "  spans: " + resultA.join("; ")
+			exit
+		end if
+		continue
+	else
+		x = spans[0].endVal
+		for i in range(1, spans.len-1)
+			if spans[i].startVal > x+1 then
+				print "y:" + yOfInterest + "  spans: " + resultA.join("; ")
+				exit
+			end if
+			x = spans[i].endVal
+		end for
+	end if
+end for

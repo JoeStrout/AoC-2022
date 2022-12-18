@@ -132,29 +132,30 @@ Search.randomWalk = function(startState, steps=1)
 	return state
 end function
 
+testScramble = function
+	// Test problem: swap any two neighboring characters to unscramble a word.
+	// State is a string.
+	// Neighbors are found by swapping every pair of characters.
+	// Heuristic uses how many letters are in the right place.
+	scramble = new Search
+	scramble.neighbors = function(state)
+		result = {}
+		for i in range(0, state.len-2)
+			result.push state[:i] + state[i+1] + state[i] + state[i+2:]
+		end for
+		return result
+	end function
+	scramble.heuristic = function(fromState, toEndState)
+		diff = 0
+		for i in fromState.indexes
+			if fromState[i] != toEndState[i] then diff = diff + 0.5
+		end for
+		return diff
+	end function
 
-// Test problem: swap any two neighboring characters to unscramble a word.
-// State is a string.
-// Neighbors are found by swapping every pair of characters.
-// Heuristic uses how many letters are in the right place.
-scramble = new Search
-scramble.neighbors = function(state)
-	result = {}
-	for i in range(0, state.len-2)
-		result.push state[:i] + state[i+1] + state[i] + state[i+2:]
-	end for
-	return result
+	start = "HLEOW LLRDO"
+	goal  = "HELLO WORLD"
+	print "Path from " + start + " to " + goal + ":"
+	print scramble.findPath(start, goal)
+	print "...found in " + scramble.steps + " steps."
 end function
-scramble.heuristic = function(fromState, toEndState)
-	diff = 0
-	for i in fromState.indexes
-		if fromState[i] != toEndState[i] then diff = diff + 0.5
-	end for
-	return diff
-end function
-
-start = "HLEOW LLRDO"
-goal  = "HELLO WORLD"
-print "Path from " + start + " to " + goal + ":"
-print scramble.findPath(start, goal)
-print "...found in " + scramble.steps + " steps."
