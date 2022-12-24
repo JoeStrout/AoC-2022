@@ -16,7 +16,6 @@ end for
 
 count = 0
 for cube in cubes.values
-	print "checking " + cube
 	for n in vector3.neighbors6
 		npos = cube.plus(n)
 		if not volume.get(npos) then count = count + 1

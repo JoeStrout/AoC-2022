@@ -28,7 +28,7 @@ end while
 //	end if
 //	span1 = Span.make(m.p1)
 //	span2 = Span.make(m.p2)
-	
+//
 //	valueA = null	
 //	valueB = null
 //	

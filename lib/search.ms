@@ -61,6 +61,7 @@ end function
 //	output: series of states from start to end
 Search.findPath = function(startState, endState)
 	qa.assert startState != null and endState != null
+	print "Searching for path from "+ startState + " to " + endState
 	
 	toDo = []			// list of states to check, in est. cost order
 	estCost = []		// corresponding list of estimated cost for each state
@@ -75,13 +76,18 @@ Search.findPath = function(startState, endState)
 	actualCost[startState] = 0
 	lineCount = 0
 	
+	bestHeur = self.heuristic(startState, endState)
 	while toDo
 		self.steps = self.steps + 1
 		currentEstTotal = estCost.pull
 		current = toDo.pull
 		
-		if current == endState then break	// success!		
-
+		if current[:endState.len] == endState then 
+			print "FOUND IT!"
+			break	// success!		
+		end if
+//	print "checking " + current
+		
 		currentActualCost = actualCost[current]
 		
 		for kv in self.neighbors(current)
@@ -90,8 +96,13 @@ Search.findPath = function(startState, endState)
 			
 			// calculate actual and estimated-total cost for this neighbor
 			cost = currentActualCost + incrementalCost
-			estimate = cost + self.heuristic(nextState, endState)
-			
+			heur = self.heuristic(nextState, endState)
+			if heur < bestHeur then
+			print "New best heur: " + heur + " (at cost: " + cost + ")"
+				bestHeur = heur
+			end if
+			estimate = cost + heur
+						
 			// if we already knew a cheaper way to get to this neighbor,
 			// or we have already done this neighbor, then skip to the next one
 			idx = toDo.indexOf(nextState)
@@ -103,11 +114,24 @@ Search.findPath = function(startState, endState)
 			estCost.insert i, estimate
 			camefrom[nextState] = current
 			actualCost[nextState] = cost
+//			print "inserted " + nextState + " with est. " + estimate + " and cost " + cost
 		end for
+//		key.get
 		current = null
 	end while
 	
 	// Now walk the camefrom list to build our path (backwards)
+	found = null
+	for k in camefrom.indexes
+		if k[:endState.len] == endState then
+			found = k
+			break
+		end if
+	end for
+	endState = found
+	print "Final end state: " + endState
+	if found == null then return []
+	
 	if not camefrom.hasIndex(endState) then return []	// no solution
 	current = endState
 	result = []
